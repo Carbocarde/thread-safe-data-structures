@@ -1,5 +1,6 @@
 #include <iostream>
 #include <thread>
+#include <mutex>
 using namespace std;
 
 template <typename T>
@@ -18,6 +19,7 @@ template <typename T>
 class Stack {
 
     private:
+    std::mutex stack_mutex;
     int size_;
     Node<T> *head_ = NULL;
 
@@ -31,6 +33,8 @@ class Stack {
     }
 
     void push(T data) {
+        this->stack_mutex.lock();
+
         if (this->head_ == NULL) {
             Node<T>* newNode = new Node<T>(data);
             this->head_ = newNode;
@@ -40,15 +44,18 @@ class Stack {
             this->head_ = newNode;
         }
         this->size_++;
+        this->stack_mutex.unlock();
     }
 
     T pop() {
         if (this->head_ == NULL) {
             return NULL;
         } else {
+            this->stack_mutex.lock();
             T data = this->head_->data;
             this->head_ = this->head_->next;
             this->size_--;
+            this->stack_mutex.unlock();
             return data;
         }
     }
@@ -58,6 +65,7 @@ class Stack {
     }
 
     void print() {
+        this->stack_mutex.lock();
         Node<T>* curr = this->head_;
 
         if (curr != NULL) {
@@ -68,6 +76,7 @@ class Stack {
 
             cout << std::to_string(curr->data) << "\n";
         }
+        this->stack_mutex.unlock();
     }
 };
 
