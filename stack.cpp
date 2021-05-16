@@ -33,18 +33,16 @@ class Stack {
     }
 
     void push(T data) {
+        Node<T>* newNode = new Node<T>(data);
         this->stack_mutex.lock();
-
         if (this->head_ == NULL) {
-            Node<T>* newNode = new Node<T>(data);
             this->head_ = newNode;
         } else {
-            Node<T>* newNode = new Node<T>(data);
             newNode->next = this->head_;
             this->head_ = newNode;
         }
-        this->size_++;
         this->stack_mutex.unlock();
+        this->size_++;
     }
 
     T pop() {
@@ -54,8 +52,8 @@ class Stack {
             this->stack_mutex.lock();
             T data = this->head_->data;
             this->head_ = this->head_->next;
-            this->size_--;
             this->stack_mutex.unlock();
+            this->size_--;
             return data;
         }
     }
