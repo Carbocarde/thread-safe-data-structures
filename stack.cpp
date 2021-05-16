@@ -1,3 +1,4 @@
+#include <iostream>
 using namespace std;
 
 template <typename T>
@@ -68,3 +69,61 @@ class Stack {
         }
     }
 };
+
+// 2 possible points
+int testInit() {
+    int passed = 0;
+    Stack<int> stack;
+
+    passed += (stack.size() == 0);
+    passed += (stack.pop() == NULL);
+
+    return passed;
+}
+
+// 4 possible points
+int testPushPeek() {
+    int passed = 0;
+    Stack<int> stack;
+
+    stack.push(1);
+    passed += (stack.size() == 1);
+    passed += (stack.peek() == 1);
+
+    stack.push(2);
+    passed += (stack.size() == 2);
+    passed += (stack.peek() == 2);
+
+    return passed;
+}
+
+// 4 possible points
+int testPop() {
+    int passed = 0;
+    Stack<int> stack;
+
+    passed += (stack.pop() == NULL);
+
+    stack.push(1);
+    stack.push(2);
+
+    passed += (stack.pop() == 2);
+    passed += (stack.pop() == 1);
+    passed += (stack.pop() == NULL);
+
+    return passed;
+}
+
+int main() {
+
+    int passed = 0;
+
+    cout << "\nStart of Stack Unit Testing\n";
+    passed = testInit();
+    cout << "[" << passed << "/2] Initialization Tests Passed\n";
+    passed = testPushPeek();
+    cout << "[" << passed << "/4] Push/Peek Unit Tests Passed\n";
+    passed = testPop();
+    cout << "[" << passed << "/4] Pop Unit Tests Passed\n";
+    return 0;
+}
