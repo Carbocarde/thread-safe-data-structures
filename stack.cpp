@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 using namespace std;
 
 template <typename T>
@@ -114,6 +115,85 @@ int testPop() {
     return passed;
 }
 
+void threadOperations(Stack<int>& stack, int* operations, int operationsLen) {
+    for (int i = 1; i <= operationsLen; i++) {
+        if (operations[i] == 0) {
+            stack.push(1);
+        } else {
+            stack.pop();
+        }
+    }
+}
+
+// Generate an array of len+1 size, 0 indicating a push operation, 1 being a pop
+// 0th element is the expected size of the stack after all operations
+int* generateOperations(int len) {
+
+    srand( (unsigned) 152 ); // Set random number seed
+    int* arr = (int*) malloc(sizeof(int) * (len + 1));
+    int stackSize = 0;
+    int operation;
+
+    for (int i = 1; i <= len; ++i) {
+        operation = rand() % 2;
+        if (stackSize == 0) {
+            // Make sure we don't pop more than we push
+            // So we can verify the stack size at the end
+            arr[i] = 0;
+            stackSize++;
+        } else {
+            arr[i] = operation;
+            if (operation == 0) {
+                stackSize++;
+            } else {
+                stackSize--;
+            }
+        }
+    }
+
+    arr[0] = stackSize;
+
+    return arr;
+}
+
+int testThreadSafe(int instructions) {
+    /*
+    Methodology: Because we cannot verify the order in which elements should be
+    added/removed, we can only verify the total length of the final stack.
+    */
+    int passed = 0;
+    Stack<int> stack;
+
+    int arrSize = instructions;
+
+    int* arr1 = generateOperations(arrSize);
+    int* arr2 = generateOperations(arrSize);
+    int* arr3 = generateOperations(arrSize);
+
+    int expectedSize = arr1[0] + arr2[0] + arr3[0];
+
+    thread th1(threadOperations, std::ref(stack), arr1, arrSize); // https://stackoverflow.com/a/64840489
+    thread th2(threadOperations, std::ref(stack), arr2, arrSize);
+    thread th3(threadOperations, std::ref(stack), arr3, arrSize);
+
+    th1.join();
+    th2.join();
+    th3.join();
+
+    // Free arrays after the instructions have finished being used
+    free(arr1);
+    free(arr2);
+    free(arr3);
+
+    if (stack.size() != expectedSize) {
+        cout << stack.size() << " != " << expectedSize << "\n";
+    } else {
+        passed++;
+    }
+
+    return passed;
+}
+
 int main() {
 
     int passed = 0;
@@ -125,5 +205,10 @@ int main() {
     cout << "[" << passed << "/4] Push/Peek Unit Tests Passed\n";
     passed = testPop();
     cout << "[" << passed << "/4] Pop Unit Tests Passed\n";
+
+    cout << "\nStart of Thread Testing\n";
+    passed = testThreadSafe(1000);
+    cout << "[" << passed << "/1] Thread Test Passed\n";
+
     return 0;
 }
