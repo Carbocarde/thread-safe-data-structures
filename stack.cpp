@@ -2,6 +2,7 @@
 #include <thread>
 #include "stack.hpp"
 using namespace std;
+using namespace tsds;
 
 // 2 possible points
 int testInit() {

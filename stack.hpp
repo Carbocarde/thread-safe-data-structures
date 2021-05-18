@@ -1,17 +1,23 @@
 #include <atomic>
 
+namespace tsds {
+
+namespace stack_struct {
+
 template <typename T>
 struct Node {
     T data = NULL;
     Node* next = NULL;
 };
 
+} // namespace stack_struct
+
 template <typename T>
 class Stack {
 
     private:
         std::atomic<int> size_ = 0;
-        std::atomic<Node<T>*> head_ = NULL;
+        std::atomic<stack_struct::Node<T>*> head_ = NULL;
 
     public:
         int size(void) {
@@ -19,7 +25,7 @@ class Stack {
         }
 
         void push(T data) {
-            Node<T>* node = (Node<T>*) malloc(sizeof(Node<T>));
+            stack_struct::Node<T>* node = (stack_struct::Node<T>*) malloc(sizeof(stack_struct::Node<T>));
             node->data = data;
 
             // Refresh the head reference, and if it doesn't change (AKA if
@@ -32,7 +38,7 @@ class Stack {
         }
 
         T pop() {
-            Node<T>* head;
+            stack_struct::Node<T>* head;
 
             // Refresh the head reference, and if it doesn't change (AKA if
             // head != null and head->next remains valid), set the head to the next node.
@@ -57,7 +63,7 @@ class Stack {
         }
 
         void clear() {
-            Node<T>* head;
+            stack_struct::Node<T>* head;
             int oldSize;
 
             // Set head to null, and ensure we have an accurate prior stack size
@@ -76,8 +82,8 @@ class Stack {
             // Set size to 0 atomically
             this->size_.fetch_sub(oldSize);
 
-            Node<T>* curr = head;
-            Node<T>* prior;
+            stack_struct::Node<T>* curr = head;
+            stack_struct::Node<T>* prior;
 
             // Traverse old stack nodes and free them individually
             while (curr != NULL) {
@@ -86,4 +92,5 @@ class Stack {
                 free(prior);
             }
         }
-};
+}; // Class Stack
+} // namespace tsds
