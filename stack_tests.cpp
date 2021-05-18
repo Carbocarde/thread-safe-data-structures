@@ -7,7 +7,7 @@ using namespace tsds;
 // 2 possible points
 int testInit() {
     int passed = 0;
-    Stack<int> stack;
+    tsds::Stack<int> stack;
 
     passed += (stack.size() == 0);
     passed += (stack.pop() == NULL);
@@ -18,7 +18,7 @@ int testInit() {
 // 4 possible points
 int testPushPeek() {
     int passed = 0;
-    Stack<int> stack;
+    tsds::Stack<int> stack;
 
     stack.push(1);
     passed += (stack.size() == 1);
@@ -34,7 +34,7 @@ int testPushPeek() {
 // 4 possible points
 int testPop() {
     int passed = 0;
-    Stack<int> stack;
+    tsds::Stack<int> stack;
 
     passed += (stack.pop() == NULL);
 
@@ -50,7 +50,7 @@ int testPop() {
 
 // Destructively verify. Returns the size once verified,
 // or -1 if the size does not match the number of elements
-int verifySize(Stack<int>& eval) {
+int verifySize(tsds::Stack<int>& eval) {
     int size = eval.size();
     int elements = 0;
     int elem = eval.pop();
@@ -69,7 +69,7 @@ int verifySize(Stack<int>& eval) {
 // 1 possible point
 int testClear() {
     int passed = 0;
-    Stack<int> stack;
+    tsds::Stack<int> stack;
 
     stack.push(1);
     stack.push(2);
@@ -83,7 +83,7 @@ int testClear() {
     return passed;
 }
 
-void threadOperations(Stack<int>& stack, int* operations, int operationsLen) {
+void threadOperations(tsds::Stack<int>& stack, int* operations, int operationsLen) {
     for (int i = 1; i < operationsLen; i++) {
         if (operations[i] == 0) {
             stack.push(1);
@@ -137,7 +137,7 @@ void testThreadSafe(int instructions) {
     int arrSize = instructions + 1;
 
     // Test #1: Test push operation
-    Stack<int> pushStack;
+    tsds::Stack<int> pushStack;
     int* arr = (int*) malloc(sizeof(int) * (instructions + 1));
     for (int i = 1; i <= instructions; i++) {
         arr[i] = 0; // Set instruction to push
@@ -177,7 +177,7 @@ void testThreadSafe(int instructions) {
         arr[i] = 1; // Set instruction to pop
     }
 
-    Stack<int> popStack;
+    tsds::Stack<int> popStack;
 
     // Initialize stack using single thread
     for (int i = 0; i < instructions*4; i++) {
@@ -212,7 +212,7 @@ void testThreadSafe(int instructions) {
     // Test #3: Test Push/Pop operations simultaneously
     passed = 0;
 
-    Stack<int> pushPopStack;
+    tsds::Stack<int> pushPopStack;
 
     int* arr1 = generateOperations(instructions);
     int* arr2 = generateOperations(instructions);
