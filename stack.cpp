@@ -123,7 +123,7 @@ int testPop() {
 }
 
 void threadOperations(Stack<int>& stack, int* operations, int operationsLen) {
-    for (int i = 1; i <= operationsLen; i++) {
+    for (int i = 1; i < operationsLen; i++) {
         if (operations[i] == 0) {
             stack.push(1);
         } else {
@@ -163,59 +163,136 @@ int* generateOperations(int len) {
     return arr;
 }
 
-int testThreadSafe(int instructions) {
+// 3 Possible Points
+void testThreadSafe(int instructions) {
     /*
     Methodology: Because we cannot verify the order in which elements should be
     added/removed, we can only verify the total length of the final stack.
     */
     int passed = 0;
-    Stack<int> stack;
 
-    int arrSize = instructions;
+    int arrSize = instructions + 1;
 
-    int* arr1 = generateOperations(arrSize);
-    int* arr2 = generateOperations(arrSize);
-    int* arr3 = generateOperations(arrSize);
+    // Test #1: Test push operation
+    Stack<int> pushStack;
+    int* arr = (int*) malloc(sizeof(int) * (instructions + 1));
+    for (int i = 1; i <= instructions; i++) {
+        arr[i] = 0; // Set instruction to push
+    }
 
-    int expectedSize = arr1[0] + arr2[0] + arr3[0];
+    // Three threads means there should be 3 * instructions elements
+    int expectedSize = 3 * instructions;
 
-    thread th1(threadOperations, std::ref(stack), arr1, arrSize); // https://stackoverflow.com/a/64840489
-    thread th2(threadOperations, std::ref(stack), arr2, arrSize);
-    thread th3(threadOperations, std::ref(stack), arr3, arrSize);
+    thread th1(threadOperations, std::ref(pushStack), arr, arrSize);
+    thread th2(threadOperations, std::ref(pushStack), arr, arrSize);
+    thread th3(threadOperations, std::ref(pushStack), arr, arrSize);
 
     th1.join();
     th2.join();
     th3.join();
+
+    // Free array after the instructions have finished being used
+    free(arr);
+
+    if (pushStack.size() != expectedSize) {
+        cout << "Failure with push operation: " << pushStack.size() << " != " << expectedSize << "\n";
+    } else {
+        passed++;
+    }
+
+    cout << "[" << passed << "/1] Push operation tests passed\n";
+
+    // Test #2: Test pop operation
+    passed = 0;
+
+    arr = (int*) malloc(sizeof(int) * (instructions + 1));
+    for (int i = 1; i <= instructions; i++) {
+        arr[i] = 1; // Set instruction to pop
+    }
+
+    Stack<int> popStack;
+
+    // Initialize stack using single thread
+    for (int i = 0; i < instructions*4; i++) {
+        popStack.push(1);
+    }
+
+    expectedSize = popStack.size() - (3 * (instructions));
+
+    thread th4(threadOperations, std::ref(popStack), arr, arrSize);
+    thread th5(threadOperations, std::ref(popStack), arr, arrSize);
+    thread th6(threadOperations, std::ref(popStack), arr, arrSize);
+
+    th4.join();
+    th5.join();
+    th6.join();
+
+    // Free array after the instructions have finished being used
+    free(arr);
+
+    if (popStack.size() != expectedSize) {
+        cout << "Failure with pop operation: " << popStack.size() << " != " << expectedSize << "\n";
+    } else {
+        passed++;
+    }
+
+    cout << "[" << passed << "/1] Pop operation tests passed\n";
+
+    // Test #3: Test Push/Pop operations simultaneously
+    passed = 0;
+
+    Stack<int> pushPopStack;
+
+    int* arr1 = generateOperations(instructions);
+    int* arr2 = generateOperations(instructions);
+    int* arr3 = generateOperations(instructions);
+
+    expectedSize = arr1[0] + arr2[0] + arr3[0];
+
+    thread th7(threadOperations, std::ref(pushPopStack), arr1, arrSize);
+    thread th8(threadOperations, std::ref(pushPopStack), arr2, arrSize);
+    thread th9(threadOperations, std::ref(pushPopStack), arr3, arrSize);
+
+    th7.join();
+    th8.join();
+    th9.join();
 
     // Free arrays after the instructions have finished being used
     free(arr1);
     free(arr2);
     free(arr3);
 
-    if (stack.size() != expectedSize) {
-        cout << stack.size() << " != " << expectedSize << "\n";
+    if (pushPopStack.size() != expectedSize) {
+        cout << pushPopStack.size() << " != " << expectedSize << "\n";
     } else {
         passed++;
     }
 
-    return passed;
+    cout << "[" << passed << "/1] Push & Pop operation tests passed\n";
 }
 
 int main() {
 
     int passed = 0;
+    int totalPassed = 0;
 
     cout << "\nStart of Stack Unit Testing\n";
     passed = testInit();
+    totalPassed += passed;
     cout << "[" << passed << "/2] Initialization Tests Passed\n";
     passed = testPushPeek();
+    totalPassed += passed;
     cout << "[" << passed << "/4] Push/Peek Unit Tests Passed\n";
     passed = testPop();
+    totalPassed += passed;
     cout << "[" << passed << "/4] Pop Unit Tests Passed\n";
 
-    cout << "\nStart of Thread Testing\n";
-    passed = testThreadSafe(1000);
-    cout << "[" << passed << "/1] Thread Test Passed\n";
+    if (totalPassed < 10) {
+        cout << "\nWARNING: Not all single-thread tests passed. Please fix before attempting to test multithreading\n";
+    } else {
+        cout << "\nStart of Thread Testing\n";
+        testThreadSafe(100);
+    }
 
     return 0;
 }
