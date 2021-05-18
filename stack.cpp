@@ -145,6 +145,23 @@ int verifySize(Stack<int>& eval) {
     }
 }
 
+// 1 possible point
+int testClear() {
+    int passed = 0;
+    Stack<int> stack;
+
+    stack.push(1);
+    stack.push(2);
+
+    stack.clear();
+
+    int size = verifySize(stack);
+
+    passed += (size == 0);
+
+    return passed;
+}
+
 void threadOperations(Stack<int>& stack, int* operations, int operationsLen) {
     for (int i = 1; i < operationsLen; i++) {
         if (operations[i] == 0) {
@@ -157,6 +174,8 @@ void threadOperations(Stack<int>& stack, int* operations, int operationsLen) {
 
 // Generate an array of len+1 size, 0 indicating a push operation, 1 being a pop
 // 0th element is the expected size of the stack after all operations
+// Note: we must ensure we do not pop on an empty array, as that can result in an
+//       unverifiable stack size.
 int* generateOperations(int len) {
 
     srand( (unsigned) 152 ); // Set random number seed
@@ -321,8 +340,11 @@ int main() {
     passed = testPop();
     totalPassed += passed;
     cout << "[" << passed << "/4] Pop Unit Tests Passed\n";
+    passed = testClear();
+    totalPassed += passed;
+    cout << "[" << passed << "/1] Clear Unit Test Passed\n";
 
-    if (totalPassed < 10) {
+    if (totalPassed < 11) {
         cout << "\nWARNING: Not all single-thread tests passed. Please fix before attempting to test multithreading\n";
     } else {
         cout << "\nStart of Thread Testing\n";
