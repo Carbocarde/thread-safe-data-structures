@@ -205,6 +205,8 @@ void testThreadSafe(int instructions) {
         passed++;
     }
 
+    pushStack.clear();
+
     cout << "[" << passed << "/1] Push operation tests passed\n";
 
     // Test #2: Test pop operation
@@ -241,6 +243,8 @@ void testThreadSafe(int instructions) {
         passed++;
     }
 
+    popStack.clear();
+
     cout << "[" << passed << "/1] Pop operation tests passed\n";
 
     // Test #3: Test Push/Pop operations simultaneously
@@ -272,6 +276,8 @@ void testThreadSafe(int instructions) {
     } else {
         passed++;
     }
+
+    pushPopStack.clear();
 
     cout << "[" << passed << "/1] Push & Pop operation tests passed\n";
 }
