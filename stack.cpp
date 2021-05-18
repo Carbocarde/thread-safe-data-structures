@@ -1,80 +1,85 @@
 #include <iostream>
 #include <thread>
-#include <mutex>
+#include <atomic>
 using namespace std;
 
 template <typename T>
-class Node {
-
-    public:
-        T data;
-        Node *next = NULL;
-
-        Node(T data) {
-            this->data = data;
-        }
+struct Node {
+    T data = NULL;
+    Node* next = NULL;
 };
 
 template <typename T>
 class Stack {
 
     private:
-    std::mutex stack_mutex;
-    int size_;
-    Node<T> *head_ = NULL;
+    std::atomic<int> size_ = 0;
+    std::atomic<Node<T>*> head_ = NULL;
 
     public:
-    Stack() {
-        this->size_ = 0;
-    }
-
     int size(void) {
-        return this->size_;
+        return this->size_.load();
     }
 
     void push(T data) {
-        Node<T>* newNode = new Node<T>(data);
-        this->stack_mutex.lock();
-        if (this->head_ == NULL) {
-            this->head_ = newNode;
-        } else {
-            newNode->next = this->head_;
-            this->head_ = newNode;
-        }
-        this->stack_mutex.unlock();
-        this->size_++;
+        Node<T>* node = (Node<T>*) malloc(sizeof(Node<T>));
+        node->data = data;
+
+        do {
+            node->next = this->head_.load();
+        } while (!atomic_compare_exchange_weak(&this->head_, &node->next, node));
+
+        this->size_.fetch_add(1);
     }
 
     T pop() {
-        if (this->head_ == NULL) {
-            return NULL;
-        } else {
-            this->stack_mutex.lock();
-            T data = this->head_->data;
-            this->head_ = this->head_->next;
-            this->stack_mutex.unlock();
-            this->size_--;
-            return data;
-        }
+        Node<T>* head;
+
+        do {
+            head = this->head_.load();
+            if (head == NULL) {
+                return NULL;
+            }
+        } while (!this->head_.compare_exchange_weak(head, head->next));
+
+        T data = head->data;
+        free(head);
+        this->size_.fetch_sub(1);
+
+        return data;
     }
 
     T peek() {
-        return this->head_->data;
+        return this->head_.load()->data;
     }
 
-    void print() {
-        this->stack_mutex.lock();
-        Node<T>* curr = this->head_;
+    void clear() {
+        Node<T>* head;
+        int oldSize;
 
-        if (curr != NULL) {
-            while (curr->next != NULL) {
-                cout << std::to_string(curr->data) << " > ";
-                curr = curr->next;
+        do {
+            head = this->head_.load();
+            if (head == NULL) {
+                break;
             }
+            // Because the compare_exchange_weak ensures that head has not changed,
+            // and size always changes when head changes, we can ensure that
+            // oldSize == size when compare_exchange_weak sets this->head_ to NULL
+            oldSize = this->size_.load();
+        } while (!this->head_.compare_exchange_weak(head, NULL));
 
-            cout << std::to_string(curr->data) << "\n";
+        // Set size to 0 atomically
+        this->size_.fetch_sub(oldSize);
+
+        Node<T>* curr = head;
+        Node<T>* prior;
+
+        // Traverse stack and free nodes
+        while (curr != NULL) {
+            prior = curr;
+            curr = curr->next;
+            free(prior);
         }
-        this->stack_mutex.unlock();
     }
 };
 
