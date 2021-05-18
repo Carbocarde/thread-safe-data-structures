@@ -25,6 +25,8 @@ class Stack {
         Node<T>* node = (Node<T>*) malloc(sizeof(Node<T>));
         node->data = data;
 
+        // Refresh the head reference, and if it doesn't change (AKA if
+        //     node->next remains valid), set the head to the new node.
         do {
             node->next = this->head_.load();
         } while (!atomic_compare_exchange_weak(&this->head_, &node->next, node));
@@ -35,6 +37,8 @@ class Stack {
     T pop() {
         Node<T>* head;
 
+        // Refresh the head reference, and if it doesn't change (AKA if
+        // head != null and head->next remains valid), set the head to the next node.
         do {
             head = this->head_.load();
             if (head == NULL) {
@@ -42,8 +46,10 @@ class Stack {
             }
         } while (!this->head_.compare_exchange_weak(head, head->next));
 
+        // Copy the data out of the old head and free the node
         T data = head->data;
         free(head);
+
         this->size_.fetch_sub(1);
 
         return data;
@@ -57,6 +63,8 @@ class Stack {
         Node<T>* head;
         int oldSize;
 
+        // Set head to null, and ensure we have an accurate prior stack size
+        //     when it is set.
         do {
             head = this->head_.load();
             if (head == NULL) {
@@ -64,7 +72,7 @@ class Stack {
             }
             // Because the compare_exchange_weak ensures that head has not changed,
             // and size always changes when head changes, we can ensure that
-            // oldSize == size when compare_exchange_weak sets this->head_ to NULL
+            // oldSize == actualSize when compare_exchange_weak sets this->head_ to NULL
             oldSize = this->size_.load();
         } while (!this->head_.compare_exchange_weak(head, NULL));
 
@@ -74,7 +82,7 @@ class Stack {
         Node<T>* curr = head;
         Node<T>* prior;
 
-        // Traverse stack and free nodes
+        // Traverse old stack nodes and free them individually
         while (curr != NULL) {
             prior = curr;
             curr = curr->next;
