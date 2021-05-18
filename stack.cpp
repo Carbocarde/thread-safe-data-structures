@@ -127,6 +127,24 @@ int testPop() {
     return passed;
 }
 
+// Destructively verify. Returns the size once verified,
+// or -1 if the size does not match the number of elements
+int verifySize(Stack<int>& eval) {
+    int size = eval.size();
+    int elements = 0;
+    int elem = eval.pop();
+    while (elem != NULL) {
+        elements++;
+        elem = eval.pop();
+    }
+
+    if (size == elements) {
+        return size;
+    } else {
+        return -1;
+    }
+}
+
 void threadOperations(Stack<int>& stack, int* operations, int operationsLen) {
     for (int i = 1; i < operationsLen; i++) {
         if (operations[i] == 0) {
@@ -199,8 +217,10 @@ void testThreadSafe(int instructions) {
     // Free array after the instructions have finished being used
     free(arr);
 
-    if (pushStack.size() != expectedSize) {
-        cout << "Failure with push operation: " << pushStack.size() << " != " << expectedSize << "\n";
+    int stackSize = verifySize(pushStack);
+
+    if (stackSize != expectedSize) {
+        cout << "Failure with push operation: " << stackSize << " != " << expectedSize << "\n";
     } else {
         passed++;
     }
@@ -237,8 +257,10 @@ void testThreadSafe(int instructions) {
     // Free array after the instructions have finished being used
     free(arr);
 
-    if (popStack.size() != expectedSize) {
-        cout << "Failure with pop operation: " << popStack.size() << " != " << expectedSize << "\n";
+    stackSize = verifySize(popStack);
+
+    if (stackSize != expectedSize) {
+        cout << "Failure with pop operation: " << stackSize << " != " << expectedSize << "\n";
     } else {
         passed++;
     }
@@ -271,8 +293,10 @@ void testThreadSafe(int instructions) {
     free(arr2);
     free(arr3);
 
-    if (pushPopStack.size() != expectedSize) {
-        cout << pushPopStack.size() << " != " << expectedSize << "\n";
+    stackSize = verifySize(pushPopStack);
+
+    if (stackSize != expectedSize) {
+        cout << "Failure with push & pop test operation: " << stackSize << " != " << expectedSize << "\n";
     } else {
         passed++;
     }
